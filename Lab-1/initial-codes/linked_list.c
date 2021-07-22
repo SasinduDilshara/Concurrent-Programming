@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include <omp.h>
+#include <pthread.h>
 
 #define MAX 65635
 
@@ -144,11 +144,11 @@ void Print(struct node *root) {
 }
 
 int main(int argc, char *argv[]) {
-
+    long thread;
     printf("Sequential Linked List Testing\n");
-    
+    pthread_t* thread_handles;
     number_of_thread = strtol(argv[1], NULL, 10);
-
+    thread_handles = malloc (number_of_thread*sizeof(pthread_t));
 
     int n = atoi(argv[2]);
     m = atoi(argv[3]);
@@ -171,8 +171,9 @@ int main(int argc, char *argv[]) {
         // printf("i%d\n", i);
     }
 
-    # pragma omp parallel num_threads(number_of_thread)
-    execute(m_fraction, i_fraction, d_fraction, root, &n);
+    for (thread = 0; thread < number_of_thread; thread++) 
+        pthread_create(&thread_handles[thread], NULL, execute, (void*) thread, m_fraction, i_fraction, d_fraction, root, &n);
+    // execute(m_fraction, i_fraction, d_fraction, root, &n);
     // Print(root);
     return 0;
 }
