@@ -1,5 +1,16 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
+#include <omp.h>
+
+#define MAX 65635
+
+int number_of_thread;
+int m;
+double m_fraction;
+double i_fraction;
+double d_fraction;
+struct node* root;
 
 struct node {
     int data;
@@ -70,6 +81,58 @@ int Delete(int value, struct node **linked_list) {
 
 }
 
+void shuffle(int* array, size_t n)
+{
+    if (n > 1) 
+    {
+        size_t i;
+        for (i = 0; i < n - 1; i++) 
+        {
+          size_t j = (rand() * rand()) % (n - 1);
+          int t = array[j];
+          array[j] = array[i];
+          array[i] = t;
+        }
+    }
+}
+
+void execute(double m_fraction, double i_fraction, double d_fraction, struct node *root, int *n) {
+    int insert_count = (*n) * i_fraction;
+    int member_count = (*n) * m_fraction;
+    int delete_count = (*n) * d_fraction;
+    int opers[insert_count + member_count + delete_count];
+    int loop;
+    // int total = insert_count + member_count + delete_count;
+    printf("insert_count - %d\n", insert_count);
+    printf("member_count - %d\n", member_count);
+    printf("delete_count - %d\n", delete_count);
+
+    for(int i = 0; i < insert_count + member_count + delete_count; i++) {
+        if (i < insert_count) {
+            opers[i] = 0;
+        } else if (i >= insert_count && i < insert_count + member_count) {
+            opers[i] = 1;
+        } else {
+            opers[i] = 2;
+        } 
+        // printf("%d ", opers[i]);
+    }
+
+    for(loop = 0; loop < 10; loop++)
+      printf("%d ", opers[loop]);
+
+    printf("\n");
+
+    shuffle(opers, insert_count + member_count + delete_count);
+
+   for(loop = 0; loop < 10; loop++)
+      printf("%d ", opers[loop]);
+
+    printf("\n");
+
+
+}
+
 void Print(struct node *root) {
     struct node *current = root;
 
@@ -84,19 +147,33 @@ int main(int argc, char *argv[]) {
 
     printf("Sequential Linked List Testing\n");
     
-    int iter = atoi(argv[1]);
-    long max = strtol(argv[2], NULL, 10);
+    number_of_thread = strtol(argv[1], NULL, 10);
 
-    struct node *root;
-    int random = rand() % max;
+
+    int n = atoi(argv[2]);
+    m = atoi(argv[3]);
+
+    m_fraction = atof(argv[4]);
+    i_fraction = atof(argv[5]);
+    d_fraction = atof(argv[6]);
+
+    int random = rand() % MAX;
     root = (struct node*) malloc(sizeof(struct node));
     root->data = random;
 
-    for (int i=0; i < iter; i++) {
-        int random = rand() % max;
-        Insert(random, &root);
+    int i = 1;
+    srand(time(NULL));
+    while(i < n-1) {
+        random = rand() % MAX; 
+        if (Insert(random, &root) == 1) {
+            i++;
+        }
+        // printf("i%d\n", i);
     }
 
-    Print(root);
-    
+    # pragma omp parallel num_threads(number_of_thread)
+    execute(m_fraction, i_fraction, d_fraction, root, &n);
+    // Print(root);
+    return 0;
 }
+
